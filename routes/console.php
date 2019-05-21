@@ -47,3 +47,40 @@ Artisan::command('convert_all_posts_from_bbcode_to_markdown', function () {
 
     $bar->finish();
 });
+
+Artisan::command('test_imgur', function () {
+    // Instancier la classe en faisant appel au Service Provider (App\Providers\ImgurServiceProvider)
+    $client = app()->make(\Imgur\Client::class);
+
+    // L'auth est gérée par le Service Provider
+    // $client->setOption('client_id', config('imgur.client_id'));
+    // $client->setOption('client_secret', config('imgur.client_secret'));
+
+    // Utiliser la classe normalement
+    $memes = $client->api('memegen')->defaultMemes();
+
+    //Et le petit bonus, les collections :
+    $memes = collect($memes)
+        ->where('is_ad', false)
+        ->reject(function ($item) {
+            return in_array([
+                'anime',
+                'manga',
+            ], $item['tags']);
+        })
+        ->map(function ($item) {
+            $created_at = carbon($item['datetime']); // Équivalent de Carbon::parse
+            $item['diff'] = $created_at->diffForHumans(); // Bam, j'te le cale là
+            return $item;
+        })
+        ->map(function ($item) {
+            return collect($item)
+                ->only(['id', 'title', 'link', 'diff'])
+                ->all();
+        })
+        ->all();
+
+    $this->table([
+        '#', 'Titre', 'Diff', 'Lien',
+    ], $memes);
+});
