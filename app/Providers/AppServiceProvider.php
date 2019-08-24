@@ -4,8 +4,6 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -24,29 +22,28 @@ class AppServiceProvider extends ServiceProvider
 
         Carbon::setLocale(config('app.locale'));
         setlocale(LC_TIME, config('app.locale'));
+        $presence = 0;
 
-        View::composer(['app', 'layouts/app', 'layouts/admin'], function ($view) {
-            $view
-                ->with('presence_counter', Cache::remember('presence_counter', now()->addMinute(), function () {
-                    return User::active()->count();
-                }));
-
-            if (auth()->check()) {
+        View::composer(['app', 'layouts/app', 'layouts/admin'], function ($view) use ($presence) {
+            if (user()) {
                 $view
                     ->with('notifications_count', user()->unreadNotifications->count())
-                    ->with('private_unread_count', \App\Models\Discussion::private(user())->count() - \App\Models\Discussion::private(user())->read(user())->count())
-                    ->with('body_classes', 'theme-4sucres');
-            } else {
-                $view
-                    ->with('body_classes', 'theme-4sucres');
+                    ->with('private_unread_count', \App\Models\Discussion::private(user())->count() - \App\Models\Discussion::private(user())->read(user())->count());
             }
+
+            $view
+                ->with('presence_counter', $presence)
+                ->with('body_classes', 'theme-4sucres');
 
             return $view;
         });
 
         Inertia::share([
             'app' => [
-                'name' => Config::get('app.name'),
+                'name'      => Config::get('app.name'),
+                'version'   => app(\PragmaRX\Version\Package\Version::class)->format('compact'),
+                'runtime'   => round((microtime(true) - LARAVEL_START), 3),
+                'presence'  => $presence,
             ],
             'auth' => function () {
                 return [

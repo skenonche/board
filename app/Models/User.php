@@ -78,7 +78,7 @@ class User extends Authenticatable implements ReactsInterface, BannableContract
 
     public function getAvatarLinkAttribute()
     {
-        return $this->avatar ? url('storage/avatars/' . $this->avatar) : url('/img/guest.png');
+        return $this->avatar && file_exists(storage_path('public/avatars/' . $this->avatar)) ? url('storage/avatars/' . $this->avatar) : url('/img/guest.png');
     }
 
     public function achievements()
