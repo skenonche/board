@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
                 'version'          => app(\PragmaRX\Version\Package\Version::class)->format('compact'),
                 'runtime'          => round((microtime(true) - LARAVEL_START), 3),
                 'real_runtime'     => function () { return round((microtime(true) - LARAVEL_START), 3); },
-                'presence'         => $presence,
+                'presence'         => function () { return User::active()->count(); },
             ],
             'auth' => function () {
                 return [
