@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Achievement;
+use App\Models\Discussion;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
@@ -174,4 +175,11 @@ Artisan::command('cache:rebuild {tag}', function ($tag) {
 
         Cache::tags('emojis')->flush();
     }
+});
+
+Artisan::command('fix_inconsistensies', function () {
+    Discussion::get()->each(function ($discussion) {
+        $discussion->replies = $discussion->posts()->count();
+        $discussion->save();
+    });
 });
